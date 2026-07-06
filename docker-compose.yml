@@ -1,0 +1,88 @@
+# PHP 服務共用的環境變數（app 與 worker）
+x-php-env: &php-env
+  APP_ENV: dev
+  DATABASE_URL: "postgresql://app:app@database:5432/app?serverVersion=18&charset=utf8"
+  REDIS_URL: "redis://redis:6379"
+  MESSENGER_TRANSPORT_DSN: "redis://redis:6379/messages"
+  MESSENGER_FAILURE_TRANSPORT_DSN: "redis://redis:6379/failed"
+  # OpenTelemetry 自動 instrumentation
+  OTEL_PHP_AUTOLOAD_ENABLED: "true"
+  OTEL_SERVICE_NAME: "symfony-app"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+  OTEL_METRICS_EXPORTER: "none"
+  OTEL_LOGS_EXPORTER: "none"
+  OTEL_PROPAGATORS: "baggage,tracecontext"
+
+x-php-depends: &php-depends
+  database:
+    condition: service_healthy
+  redis:
+    condition: service_started
+  jaeger:
+    condition: service_started
+
+services:
+  app:
+    build:
+      context: ./docker/frankenphp
+    ports:
+      - "8088:80"
+    volumes:
+      - ./app:/app
+      - ./docker/frankenphp/Caddyfile:/etc/frankenphp/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment: *php-env
+    depends_on: *php-depends
+
+  # Messenger 非同步消費者：微服務拆分時可直接獨立部署
+  worker:
+    build:
+      context: ./docker/frankenphp
+    command: php bin/console messenger:consume async --time-limit=3600 -vv
+    restart: unless-stopped
+    volumes:
+      - ./app:/app
+    environment:
+      <<: *php-env
+      OTEL_SERVICE_NAME: "symfony-worker"
+    depends_on: *php-depends
+
+  database:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5432:5432"
+    volumes:
+      # postgres:18 起映像的資料目錄改為 /var/lib/postgresql（不再是 .../data）
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  jaeger:
+    image: jaegertracing/jaeger:2.5.0
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+
+volumes:
+  db_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,31 @@
+deptrac:
+  paths:
+    - src
+  layers:
+    - name: Domain
+      collectors:
+        - type: directory
+          value: src/.+/Domain/.*
+    - name: Application
+      collectors:
+        - type: directory
+          value: src/.+/Application/.*
+    - name: Infrastructure
+      collectors:
+        - type: directory
+          value: src/.+/Infrastructure/.*
+    - name: Presentation
+      collectors:
+        - type: directory
+          value: src/.+/Presentation/.*
+  ruleset:
+    # 依賴方向：Presentation / Infrastructure -> Application -> Domain
+    Domain: []
+    Application:
+      - Domain
+    Infrastructure:
+      - Application
+      - Domain
+    Presentation:
+      - Application
+      - Domain

@@ -1,0 +1,22 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+            failed: '%env(MESSENGER_FAILURE_TRANSPORT_DSN)%'
+            sync: 'sync://'
+
+        routing:
+            # 模組間非同步訊息一律走 async（Redis）
+            App\Demo\Application\Message\PingMessage: async
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                async: 'in-memory://'
