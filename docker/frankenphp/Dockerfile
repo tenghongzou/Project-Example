@@ -30,4 +30,4 @@ RUN composer install --no-dev --no-scripts --prefer-dist --no-progress --no-inte
 COPY app /app
 
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
- && bin/console cache:warmup
+ && php bin/console cache:warmup
