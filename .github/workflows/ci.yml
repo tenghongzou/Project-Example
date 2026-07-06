@@ -22,6 +22,10 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      # 檢查依賴是否有已知安全漏洞（CVE advisories）
+      - name: Audit dependencies
+        run: composer audit
+
       # 品質關卡：PHPStan + CS 檢查 + Deptrac 模組邊界 + PHPUnit
       - name: Run quality gate
         run: composer qa

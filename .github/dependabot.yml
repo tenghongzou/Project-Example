@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # PHP 依賴（含安全性更新）
+  - package-ecosystem: composer
+    directory: /app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      symfony:
+        patterns: ["symfony/*"]
+      open-telemetry:
+        patterns: ["open-telemetry/*"]
+
+  # GitHub Actions 版本
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Docker 基底映像
+  - package-ecosystem: docker
+    directory: /docker/frankenphp
+    schedule:
+      interval: weekly

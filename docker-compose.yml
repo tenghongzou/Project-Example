@@ -52,6 +52,8 @@ services:
     environment:
       <<: *php-env
       OTEL_SERVICE_NAME: "symfony-worker"
+      # 常駐消費者用 simple processor，span 即時匯出（batch 會積在緩衝內很久才出去）
+      OTEL_PHP_TRACES_PROCESSOR: "simple"
     depends_on: *php-depends
 
   database:
