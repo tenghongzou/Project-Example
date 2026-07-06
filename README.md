@@ -57,6 +57,23 @@ PHP 映像內建 `opentelemetry` 擴充，透過套件自動 instrument（設定
 Trace 以 OTLP (http/protobuf) 送到 Jaeger 4318 埠；`traceparent` 會跨服務傳遞，
 未來拆微服務後鏈路自動串起來。
 
+## UAT / Prod 映像
+
+CI 會自動打包 production-grade 映像（`docker/frankenphp/Dockerfile` 的 `prod` target：
+code 打包進 image、`composer --no-dev`、cache 預熱、opcache 關閉時間戳檢查）推到 GHCR：
+
+| 觸發 | 映像標籤 |
+|---|---|
+| push 到 `main` | `ghcr.io/<repo>:uat`、`uat-<sha>` |
+| 打 `v*` tag（如 `v1.0.0`） | `ghcr.io/<repo>:prod`、`1.0.0`、`latest` |
+
+UAT 與 prod 是**同一個 artifact**，環境差異（DB 位址、OTel endpoint 等）
+一律用執行期環境變數注入，不重新建置。發佈 prod 版本：
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
 ## 目錄結構
 
 ```

@@ -1,0 +1,11 @@
+.git
+.github
+.gitattributes
+app/vendor
+app/var
+app/.env.local
+app/.env.*.local
+app/.phpunit.cache
+docker-compose.yml
+README.md
+ARCHITECTURE.md

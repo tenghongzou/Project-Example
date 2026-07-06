@@ -26,7 +26,9 @@ x-php-depends: &php-depends
 services:
   app:
     build:
-      context: ./docker/frankenphp
+      context: .
+      dockerfile: docker/frankenphp/Dockerfile
+      target: dev
     ports:
       - "8088:80"
     volumes:
@@ -40,7 +42,9 @@ services:
   # Messenger 非同步消費者：微服務拆分時可直接獨立部署
   worker:
     build:
-      context: ./docker/frankenphp
+      context: .
+      dockerfile: docker/frankenphp/Dockerfile
+      target: dev
     command: php bin/console messenger:consume async --time-limit=3600 -vv
     restart: unless-stopped
     volumes:

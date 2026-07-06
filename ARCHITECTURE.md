@@ -75,7 +75,7 @@ src/
 | 環境 | 模式 | 說明 |
 |---|---|---|
 | 開發（現在） | classic | 每請求重建 kernel，改code即生效；程式碼用 volume 掛載 |
-| 生產 | worker mode | Caddyfile 開 `frankenphp { worker /app/public/index.php }`，kernel 常駐記憶體；程式碼 COPY 進 image、關閉 `opcache.validate_timestamps`，另需 `runtime/frankenphp-symfony` |
+| 生產 | classic（暫時） | 程式碼 COPY 進 image、`--no-dev` + cache 預熱、關閉 `opcache.validate_timestamps`。worker mode 需 `runtime/frankenphp-symfony`，該套件尚未支援 Symfony 8——支援後開啟 `Caddyfile.prod` 內的註解即可 |
 
 生產 image 建議 multi-stage：`composer install --no-dev` + `APP_ENV=prod` 預熱 cache，
 和本 repo 的開發 Dockerfile 分開維護。

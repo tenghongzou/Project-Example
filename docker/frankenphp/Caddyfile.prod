@@ -1,0 +1,15 @@
+{
+	frankenphp
+	# worker mode（kernel 常駐記憶體）需要 runtime/frankenphp-symfony，
+	# 該套件目前尚未支援 Symfony 8；支援後改成：
+	# frankenphp {
+	# 	worker /app/public/index.php
+	# }
+	# 並在 Dockerfile 設 APP_RUNTIME="Runtime\\FrankenPhpSymfonyRuntime"
+}
+
+:80 {
+	root * /app/public
+	encode zstd gzip
+	php_server
+}
