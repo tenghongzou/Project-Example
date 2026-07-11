@@ -42,6 +42,7 @@ final readonly class EventService
         $this->messageBus->dispatch(new EventPublished(
             eventId: $event->getId(),
             name: $event->getName(),
+            scheduledAt: $event->getScheduledAt()->format(\DateTimeInterface::ATOM),
         ));
 
         return $event;

@@ -3,7 +3,9 @@
 #   prod: CI 打包 UAT / prod 映像（code 打包進 image、no-dev、cache 預熱、worker mode）
 FROM dunglas/frankenphp:1-php8.4 AS base
 
-RUN install-php-extensions intl pdo_pgsql opcache zip redis opentelemetry
+RUN install-php-extensions intl pdo_pgsql opcache zip redis opentelemetry grpc
+# temporal/sdk 需要 sockets（RoadRunner Goridge relay）；獨立一層以保留上面 grpc 的建置快取
+RUN install-php-extensions sockets
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -13,6 +15,14 @@ WORKDIR /app
 FROM base AS dev
 
 COPY docker/frankenphp/conf.d/app.ini /usr/local/etc/php/conf.d/app.ini
+
+# ------------------------------------------------- temporal-worker
+# Temporal PHP worker 跑在 RoadRunner 上（SDK 的標準宿主），code 同樣 volume 掛載
+FROM dev AS temporal-worker
+
+COPY --from=ghcr.io/roadrunner-server/roadrunner:latest /usr/bin/rr /usr/local/bin/rr
+
+CMD ["rr", "serve", "-c", ".rr.yaml"]
 
 # ---------------------------------------------------------------- prod
 FROM base AS prod

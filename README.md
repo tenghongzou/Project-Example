@@ -10,6 +10,8 @@ Symfony 8 + FrankenPHP (PHP 8.4) + PostgreSQL 18 + Redis 8 + Jaeger（OpenTeleme
 | 應用程式 | http://localhost:8088 | FrankenPHP（Caddy 內嵌 PHP 8.4） |
 | Messenger worker | — | 消費 `async` transport（Redis）的獨立容器 |
 | Jaeger UI | http://localhost:16686 | 鏈路追蹤查詢介面 |
+| Temporal UI | http://localhost:8233 | 工作流引擎查詢介面（server gRPC 在 7233） |
+| Temporal worker | — | RoadRunner 宿主的 PHP workflow/activity worker |
 | PostgreSQL 18 | localhost:5432 | 帳密/DB：`app` / `app` / `app` |
 | Redis 8 | localhost:6379 | Symfony cache + Messenger transport |
 
@@ -77,6 +79,19 @@ curl -X POST localhost:8088/api/flows -H 'Content-Type: application/json' \
 curl -X POST localhost:8088/api/flows/<id>/instances -H 'Content-Type: application/json' -d '{"context":{}}'
 curl localhost:8088/api/flow-instances/<instance_id>
 ```
+
+## Temporal（durable workflow）
+
+`Orchestration` 模組示範 Temporal 整合：活動 publish 後（`EventPublished` 事件）
+自動排一個 **durable timer** 提醒工作流，睡到活動開始時間執行提醒 activity——
+timer 由 Temporal 持久化，worker 重啟/部署都不會遺失，這是自建 FlowEngine 做不到的。
+
+- Application 層只依賴 `ReminderScheduler` port；Temporal SDK 隔離在 Infrastructure
+- workflow id 用 `event-reminder-{eventId}` 去重，事件重複投遞天然冪等
+- 驗證：publish 一個 `scheduledAt` 在近未來的活動 → Temporal UI（localhost:8233）
+  看到 workflow 與 timer → 到點後 `docker compose logs temporal-worker` 出現提醒 log
+- dev 用 `temporalio/auto-setup`（schema 建在共用 PG 的 `temporal` 資料庫）；
+  正式環境建議獨立部署 Temporal cluster 或用 Temporal Cloud
 
 整合事件經 Redis 送出，`Notification` 模組的 handler 訂閱消費（見 worker log，
 log 內 `trace_id` 可在 Jaeger 對照完整鏈路）。首次啟動記得跑 migration：

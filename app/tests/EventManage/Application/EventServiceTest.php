@@ -73,6 +73,7 @@ final class EventServiceTest extends TestCase
         self::assertInstanceOf(EventPublished::class, $dispatchedMessage);
         self::assertSame($event->getId(), $dispatchedMessage->eventId);
         self::assertSame('Team Meetup', $dispatchedMessage->name);
+        self::assertSame('2026-08-01T10:00:00+00:00', $dispatchedMessage->scheduledAt);
     }
 
     public function testCancelCancelsTheEventAndDispatchesEventCancelled(): void

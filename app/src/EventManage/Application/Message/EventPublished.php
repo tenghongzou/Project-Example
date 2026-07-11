@@ -12,6 +12,8 @@ final readonly class EventPublished
     public function __construct(
         public string $eventId,
         public string $name,
+        /** 活動開始時間（ATOM、UTC）；訂閱者可據此排程提醒 */
+        public string $scheduledAt,
     ) {
     }
 }

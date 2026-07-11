@@ -38,6 +38,9 @@ src/
 │   ├── Application/   #   FlowService、ExecuteNextStepHandler（step 級冪等）、StepExecutor 介面
 │   ├── Infrastructure/#   Doctrine repositories、內建 executors（log/set/fail，tagged services 可擴充）
 │   └── Presentation/  #   /api/flows、/api/flow-instances
+├── Orchestration/     # Temporal 整合（durable workflow）：訂閱 EventPublished 排到點提醒
+│   ├── Application/   #   ReminderScheduler port + 訂閱 handler（不依賴 Temporal SDK）
+│   └── Infrastructure/#   Temporal adapter、workflow/activity 定義（跑在 temporal-worker/RoadRunner）
 ├── Notification/      # 通知（EventManage 與 FlowEngine 整合事件的訂閱者，只依賴 Message 契約）
 │   └── Application/MessageHandler/
 ├── Demo/              # 範例模組（示範規範，可刪除）

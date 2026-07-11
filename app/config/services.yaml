@@ -21,3 +21,13 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # Temporal client（Orchestration 模組的 Infrastructure 依賴）
+    Temporal\Client\WorkflowClientInterface:
+        factory: ['App\Orchestration\Infrastructure\Temporal\WorkflowClientFactory', 'create']
+        arguments:
+            - '%env(TEMPORAL_ADDRESS)%'
+
+    # temporal-worker.php 需要從 container 取出 activity（含其依賴）
+    App\Orchestration\Infrastructure\Temporal\ReminderActivity:
+        public: true

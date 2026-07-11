@@ -14,6 +14,7 @@ x-php-env: &php-env
   OTEL_METRICS_EXPORTER: "none"
   OTEL_LOGS_EXPORTER: "none"
   OTEL_PROPAGATORS: "baggage,tracecontext"
+  TEMPORAL_ADDRESS: "temporal:7233"
 
 x-php-depends: &php-depends
   database:
@@ -61,6 +62,56 @@ services:
       # 常駐消費者用 simple processor，span 即時匯出（batch 會積在緩衝內很久才出去）
       OTEL_PHP_TRACES_PROCESSOR: "simple"
     depends_on: *php-depends
+
+  # Temporal 服務（dev 用 auto-setup：自動在共用的 PostgreSQL 建 temporal 資料庫與 schema）
+  temporal:
+    image: temporalio/auto-setup:latest
+    environment:
+      DB: "postgres12"
+      DB_PORT: "5432"
+      POSTGRES_USER: "app"
+      POSTGRES_PWD: "app"
+      POSTGRES_SEEDS: "database"
+      DBNAME: "temporal"
+      VISIBILITY_DBNAME: "temporal_visibility"
+    ports:
+      - "7233:7233"   # gRPC
+    depends_on:
+      database:
+        condition: service_healthy
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    environment:
+      TEMPORAL_ADDRESS: "temporal:7233"
+      TEMPORAL_CORS_ORIGINS: "http://localhost:8233"
+    ports:
+      - "8233:8080"   # Temporal Web UI
+    depends_on:
+      - temporal
+
+  # Temporal PHP worker（RoadRunner 宿主，執行 workflow/activity code）
+  temporal-worker:
+    build:
+      context: .
+      dockerfile: docker/frankenphp/Dockerfile
+      target: temporal-worker
+    restart: unless-stopped
+    volumes:
+      - ./app:/app
+      - ./docker/temporal/.rr.yaml:/app/.rr.yaml:ro
+    environment:
+      <<: *php-env
+      OTEL_SERVICE_NAME: "temporal-worker"
+      OTEL_PHP_TRACES_PROCESSOR: "simple"
+    # 基底映像的 healthcheck 打 HTTP server，此容器跑的是 RoadRunner，停用避免誤報
+    healthcheck:
+      disable: true
+    depends_on:
+      temporal:
+        condition: service_started
+      database:
+        condition: service_healthy
 
   database:
     image: postgres:18-alpine
