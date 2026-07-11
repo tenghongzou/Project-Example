@@ -18,6 +18,10 @@ framework:
             App\EventManage\Application\Message\EventCreated: async
             App\EventManage\Application\Message\EventPublished: async
             App\EventManage\Application\Message\EventCancelled: async
+            # FlowEngine：內部逐步執行命令 + 對外整合事件
+            App\FlowEngine\Application\Message\ExecuteNextStep: async
+            App\FlowEngine\Application\Message\FlowInstanceCompleted: async
+            App\FlowEngine\Application\Message\FlowInstanceFailed: async
 
 when@test:
     framework:

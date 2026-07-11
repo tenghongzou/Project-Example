@@ -56,6 +56,28 @@ docker compose logs -f worker
 | POST | `/api/events/{id}/publish` | draft → published，發佈 `EventPublished`（非法轉換 409） |
 | POST | `/api/events/{id}/cancel` | → cancelled，發佈 `EventCancelled` |
 
+## FlowEngine API（流程引擎）
+
+| Method | Path | 說明 |
+|---|---|---|
+| POST | `/api/flows` | 建立流程定義（步驟 type 會 fail-fast 驗證，最多 50 步） |
+| GET | `/api/flows` / `/api/flows/{id}` | 定義列表 / 單筆 |
+| POST | `/api/flows/{id}/instances` | 啟動實例，**202 Accepted**（worker 逐步非同步執行） |
+| GET | `/api/flow-instances/{id}` | 實例狀態（status / current_step_index / context / error） |
+
+執行模型：每個步驟一則 `ExecuteNextStep` 訊息（帶 stepIndex 作 step 級冪等 key），
+worker 執行後推進並派送下一步；完成/失敗發佈 `FlowInstanceCompleted` / `FlowInstanceFailed`。
+內建步驟 type：`log`、`set`（寫 context）、`fail`（測試用）；
+實作 `StepExecutor` 介面即自動註冊新 type（tagged service）。
+
+範例：
+```bash
+curl -X POST localhost:8088/api/flows -H 'Content-Type: application/json' \
+  -d '{"name":"Demo","steps":[{"type":"set","params":{"key":"a","value":1}},{"type":"log","params":{}}]}'
+curl -X POST localhost:8088/api/flows/<id>/instances -H 'Content-Type: application/json' -d '{"context":{}}'
+curl localhost:8088/api/flow-instances/<instance_id>
+```
+
 整合事件經 Redis 送出，`Notification` 模組的 handler 訂閱消費（見 worker log，
 log 內 `trace_id` 可在 Jaeger 對照完整鏈路）。首次啟動記得跑 migration：
 `docker compose exec app bin/console doctrine:migrations:migrate -n`；

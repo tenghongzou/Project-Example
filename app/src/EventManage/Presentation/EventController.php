@@ -9,6 +9,7 @@ use App\EventManage\Domain\Event;
 use App\EventManage\Domain\EventNotFound;
 use App\EventManage\Domain\EventRepository;
 use App\EventManage\Domain\InvalidEventTransition;
+use App\Shared\Presentation\ProblemResponseTrait;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +21,8 @@ use Symfony\Component\Routing\Requirement\Requirement;
 #[Route('/api/events')]
 final class EventController extends AbstractController
 {
+    use ProblemResponseTrait;
+
     public function __construct(
         private readonly EventService $eventService,
         private readonly EventRepository $eventRepository,
@@ -86,18 +89,6 @@ final class EventController extends AbstractController
         }
 
         return $this->json($this->toArray($event));
-    }
-
-    /**
-     * 業務錯誤統一用 RFC 7807 problem+json，與 MapRequestPayload 驗證失敗（422）的形狀一致.
-     */
-    private function problem(int $status, string $title, string $detail): JsonResponse
-    {
-        return $this->json(
-            ['type' => 'about:blank', 'title' => $title, 'status' => $status, 'detail' => $detail],
-            $status,
-            ['Content-Type' => 'application/problem+json'],
-        );
     }
 
     /**

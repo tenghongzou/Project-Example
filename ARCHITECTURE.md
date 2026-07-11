@@ -33,7 +33,12 @@ src/
 │   ├── Application/   #   EventService（use case）、Message/（發佈的整合事件 = pub/sub 契約）
 │   ├── Infrastructure/#   DoctrineEventRepository（PG schema: event_manage）
 │   └── Presentation/  #   EventController（REST /api/events）、CreateEventRequest DTO
-├── Notification/      # 通知（EventManage 整合事件的訂閱者，只依賴其 Message 契約）
+├── FlowEngine/        # 流程引擎：FlowDefinition（不可變定義）+ FlowInstance（訊息驅動逐步執行）
+│   ├── Domain/        #   兩個 entity、狀態機、repository 介面
+│   ├── Application/   #   FlowService、ExecuteNextStepHandler（step 級冪等）、StepExecutor 介面
+│   ├── Infrastructure/#   Doctrine repositories、內建 executors（log/set/fail，tagged services 可擴充）
+│   └── Presentation/  #   /api/flows、/api/flow-instances
+├── Notification/      # 通知（EventManage 與 FlowEngine 整合事件的訂閱者，只依賴 Message 契約）
 │   └── Application/MessageHandler/
 ├── Demo/              # 範例模組（示範規範，可刪除）
 └── <NewContext>/      # 新模組照此格局：Domain / Application / Infrastructure / Presentation

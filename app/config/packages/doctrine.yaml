@@ -27,6 +27,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/EventManage/Domain'
                 prefix: 'App\EventManage\Domain'
                 alias: EventManage
+            FlowEngine:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/FlowEngine/Domain'
+                prefix: 'App\FlowEngine\Domain'
+                alias: FlowEngine
 
 when@test:
     doctrine:
