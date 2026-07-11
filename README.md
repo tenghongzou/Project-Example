@@ -46,6 +46,21 @@ docker compose logs -f worker
 2. `GET http://localhost:8088/ping` — 派送 `PingMessage` 到 Redis，由 worker 非同步消費
 3. 開 http://localhost:16686 ，service 選 `symfony-app` / `symfony-worker` 看 trace
 
+## EventManage API（活動管理 + pub/sub）
+
+| Method | Path | 說明 |
+|---|---|---|
+| POST | `/api/events` | 建立活動（draft），發佈 `EventCreated` |
+| GET | `/api/events` | 活動列表 |
+| GET | `/api/events/{id}` | 單筆（404 if missing） |
+| POST | `/api/events/{id}/publish` | draft → published，發佈 `EventPublished`（非法轉換 409） |
+| POST | `/api/events/{id}/cancel` | → cancelled，發佈 `EventCancelled` |
+
+整合事件經 Redis 送出，`Notification` 模組的 handler 訂閱消費（見 worker log，
+log 內 `trace_id` 可在 Jaeger 對照完整鏈路）。首次啟動記得跑 migration：
+`docker compose exec app bin/console doctrine:migrations:migrate -n`；
+跑功能測試前先建測試庫：`doctrine:database:create --env=test` + `migrations:migrate --env=test`。
+
 ## 鏈路追蹤
 
 PHP 映像內建 `opentelemetry` 擴充，透過套件自動 instrument（設定都在

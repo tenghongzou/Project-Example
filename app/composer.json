@@ -24,8 +24,13 @@
         "symfony/http-client": "8.0.*",
         "symfony/messenger": "8.0.*",
         "symfony/monolog-bundle": "^4.0",
+        "symfony/property-access": "8.0.*",
+        "symfony/property-info": "8.0.*",
         "symfony/redis-messenger": "8.0.*",
         "symfony/runtime": "8.0.*",
+        "symfony/serializer": "8.0.*",
+        "symfony/uid": "8.0.*",
+        "symfony/validator": "8.0.*",
         "symfony/yaml": "8.0.*"
     },
     "config": {
@@ -92,6 +97,7 @@
         }
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^8.6",
         "deptrac/deptrac": "^4.6",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",

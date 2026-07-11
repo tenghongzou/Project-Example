@@ -42,5 +42,7 @@
     </source>
 
     <extensions>
+        <!-- 每個測試包在 DB transaction 內並回滾，測試間互不污染 -->
+        <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension" />
     </extensions>
 </phpunit>

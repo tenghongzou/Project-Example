@@ -27,13 +27,15 @@
 
 ```
 src/
-├── Shared/            # 跨模組共用：契約、值物件、健康檢查等橫切關注點
-│   └── Presentation/
+├── Shared/            # 跨模組共用：契約、值物件、健康檢查、logging 等橫切關注點
+├── EventManage/       # 活動管理（第一個真實業務模組）
+│   ├── Domain/        #   Event 實體＋狀態機、EventRepository 介面、EventStatus
+│   ├── Application/   #   EventService（use case）、Message/（發佈的整合事件 = pub/sub 契約）
+│   ├── Infrastructure/#   DoctrineEventRepository（PG schema: event_manage）
+│   └── Presentation/  #   EventController（REST /api/events）、CreateEventRequest DTO
+├── Notification/      # 通知（EventManage 整合事件的訂閱者，只依賴其 Message 契約）
+│   └── Application/MessageHandler/
 ├── Demo/              # 範例模組（示範規範，可刪除）
-│   ├── Application/   #   use case、Message、MessageHandler
-│   │   ├── Message/
-│   │   └── MessageHandler/
-│   └── Presentation/  #   Controller、CLI Command
 └── <NewContext>/      # 新模組照此格局：Domain / Application / Infrastructure / Presentation
 ```
 
@@ -45,6 +47,9 @@ src/
 3. 每個模組使用**獨立的 PostgreSQL schema**（Doctrine entity 加
    `#[ORM\Table(schema: 'demo')]`），禁止跨 schema JOIN —— 拆庫時才不會痛。
 4. 模組對外的訊息類別視為 **API 契約**：欄位只加不改，變更走版本化。
+5. **時間一律以 UTC 儲存**：DB 欄位為 `TIMESTAMP WITHOUT TIME ZONE`，實體在建構時
+   負責把輸入正規化成 UTC；PHP 的 `date.timezone` 必須是 UTC（php.ini 已固定），
+   任何新的執行環境（cron、獨立 worker）都要維持此設定，否則讀回時間會偏移。
 
 ## 演進路線
 

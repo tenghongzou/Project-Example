@@ -10,6 +10,22 @@ jobs:
     defaults:
       run:
         working-directory: app
+    env:
+      DATABASE_URL: "postgresql://app:app@127.0.0.1:5432/app?serverVersion=18&charset=utf8"
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v7
 
@@ -25,6 +41,12 @@ jobs:
       # 檢查依賴是否有已知安全漏洞（CVE advisories）
       - name: Audit dependencies
         run: composer audit
+
+      # 準備功能測試用資料庫（.env 的 dbname 加上 _test 後綴）
+      - name: Prepare test database
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --env=test
+          php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
       # 品質關卡：PHPStan + CS 檢查 + Deptrac 模組邊界 + PHPUnit
       - name: Run quality gate

@@ -20,6 +20,13 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+            # 各業務模組的 Domain 實體（每模組獨立 PG schema，見 ARCHITECTURE.md）
+            EventManage:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/EventManage/Domain'
+                prefix: 'App\EventManage\Domain'
+                alias: EventManage
 
 when@test:
     doctrine:

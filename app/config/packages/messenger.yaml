@@ -14,6 +14,10 @@ framework:
         routing:
             # 模組間非同步訊息一律走 async（Redis）
             App\Demo\Application\Message\PingMessage: async
+            # EventManage 對外發佈的整合事件（pub/sub 契約）
+            App\EventManage\Application\Message\EventCreated: async
+            App\EventManage\Application\Message\EventPublished: async
+            App\EventManage\Application\Message\EventCancelled: async
 
 when@test:
     framework:
