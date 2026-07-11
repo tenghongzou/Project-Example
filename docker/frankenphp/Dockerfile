@@ -20,7 +20,7 @@ COPY docker/frankenphp/conf.d/app.ini /usr/local/etc/php/conf.d/app.ini
 # Temporal PHP worker 跑在 RoadRunner 上（SDK 的標準宿主），code 同樣 volume 掛載
 FROM dev AS temporal-worker
 
-COPY --from=ghcr.io/roadrunner-server/roadrunner:latest /usr/bin/rr /usr/local/bin/rr
+COPY --from=ghcr.io/roadrunner-server/roadrunner:2025.1.15 /usr/bin/rr /usr/local/bin/rr
 
 CMD ["rr", "serve", "-c", ".rr.yaml"]
 

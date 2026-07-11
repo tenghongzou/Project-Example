@@ -6,6 +6,7 @@ namespace App\Orchestration\Infrastructure\Temporal;
 
 use Carbon\CarbonInterval;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Workflow;
 
 /**
@@ -20,7 +21,10 @@ final class EventReminderWorkflow implements EventReminderWorkflowInterface
 
         $activity = Workflow::newActivityStub(
             ReminderActivityInterface::class,
-            ActivityOptions::new()->withStartToCloseTimeout(CarbonInterval::seconds(30)),
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(CarbonInterval::seconds(30))
+                // Temporal 預設無限重試；提醒送不出去重試 5 次就該進 log/告警，不該永久卡住
+                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(5)),
         );
 
         // stub 在 workflow context 實際回傳 Promise 供 yield（SDK 的 proxy 魔法，介面型別是給 activity 實作看的）

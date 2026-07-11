@@ -4,6 +4,10 @@ server:
   command: "php bin/temporal-worker.php"
 
 temporal:
-  address: "temporal:7233"
+  address: "${TEMPORAL_ADDRESS}"
   activities:
     num_workers: 2
+
+# healthcheck 端點：/health?plugin=temporal
+status:
+  address: "127.0.0.1:2114"

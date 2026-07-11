@@ -65,7 +65,8 @@ services:
 
   # Temporal 服務（dev 用 auto-setup：自動在共用的 PostgreSQL 建 temporal 資料庫與 schema）
   temporal:
-    image: temporalio/auto-setup:latest
+    # 以 digest 鎖定（2025-06 的 latest）；升級時先在本機驗證再換 digest
+    image: temporalio/auto-setup@sha256:9be7b8d98f60d00f4f2ff74731c071a17848d8182bbc8429e314a24c94ea105b
     environment:
       DB: "postgres12"
       DB_PORT: "5432"
@@ -76,12 +77,18 @@ services:
       VISIBILITY_DBNAME: "temporal_visibility"
     ports:
       - "7233:7233"   # gRPC
+    healthcheck:
+      test: ["CMD-SHELL", "tctl --address temporal:7233 cluster health 2>/dev/null | grep -q SERVING"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     depends_on:
       database:
         condition: service_healthy
 
   temporal-ui:
-    image: temporalio/ui:latest
+    image: temporalio/ui@sha256:fc47cd8202c98ed868745fd9f2f011585232676d08da621b9a6d7bc4653c17aa
     environment:
       TEMPORAL_ADDRESS: "temporal:7233"
       TEMPORAL_CORS_ORIGINS: "http://localhost:8233"
@@ -103,12 +110,16 @@ services:
       <<: *php-env
       OTEL_SERVICE_NAME: "temporal-worker"
       OTEL_PHP_TRACES_PROCESSOR: "simple"
-    # 基底映像的 healthcheck 打 HTTP server，此容器跑的是 RoadRunner，停用避免誤報
+    # 用 RoadRunner status plugin 檢查 temporal plugin 健康（基底映像預設打 HTTP server，會誤報）
     healthcheck:
-      disable: true
+      test: ["CMD-SHELL", "curl -sf 'http://127.0.0.1:2114/health?plugin=temporal' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     depends_on:
       temporal:
-        condition: service_started
+        condition: service_healthy
       database:
         condition: service_healthy
 
