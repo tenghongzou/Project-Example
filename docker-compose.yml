@@ -99,7 +99,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./app:/app
-      - ./docker/temporal/.rr.yaml:/app/.rr.yaml:ro
     environment:
       <<: *php-env
       OTEL_SERVICE_NAME: "temporal-worker"
