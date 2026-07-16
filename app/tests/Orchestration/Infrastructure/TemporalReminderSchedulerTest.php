@@ -25,9 +25,10 @@ final class TemporalReminderSchedulerTest extends TestCase
             ->with(
                 EventReminderWorkflowInterface::class,
                 self::callback(
+                    // taskQueue 走建構子注入（env TEMPORAL_TASK_QUEUE），這裡驗證有被用上
                     static fn (WorkflowOptions $options): bool => 'event-reminder-event-1' === $options->workflowId
                         && IdReusePolicy::RejectDuplicate->value === $options->workflowIdReusePolicy
-                        && 'default' === $options->taskQueue,
+                        && 'reminders' === $options->taskQueue,
                 ),
             )
             ->willReturn($stub);
@@ -41,7 +42,7 @@ final class TemporalReminderSchedulerTest extends TestCase
                 self::callback(static fn (int $delay): bool => $delay >= 1 && $delay <= 3600),
             );
 
-        $scheduler = new TemporalReminderScheduler($client, new NullLogger());
+        $scheduler = new TemporalReminderScheduler($client, new NullLogger(), 'reminders');
 
         $scheduler->scheduleEventReminder('event-1', 'Team Meetup', new \DateTimeImmutable('+3600 seconds'));
     }

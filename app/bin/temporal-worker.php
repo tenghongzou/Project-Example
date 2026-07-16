@@ -20,7 +20,8 @@ $kernel->boot();
 $container = $kernel->getContainer();
 
 $factory = WorkerFactory::create();
-$worker = $factory->newWorker('default');
+// 與 TemporalReminderScheduler 排 workflow 用的 queue 必須一致（同一個 env）
+$worker = $factory->newWorker($_SERVER['TEMPORAL_TASK_QUEUE'] ?? 'default');
 
 $worker->registerWorkflowTypes(EventReminderWorkflow::class);
 $worker->registerActivity(

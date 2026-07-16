@@ -2,7 +2,7 @@
 
 ## 現狀（P0 — 已完成）
 
-單一 Symfony 8 應用跑在 FrankenPHP 上，搭配 PostgreSQL 18、Redis 8、Jaeger：
+單一 Symfony 8 應用跑在 FrankenPHP 上，搭配 PostgreSQL 18、Redis 8、Temporal、Jaeger：
 
 ```
                     ┌──────────────┐
@@ -10,9 +10,15 @@
                     │ (Symfony 8)  │────► Redis 8（cache）
                     └──────┬───────┘
                            │ dispatch（Messenger / Redis transport）
-                    ┌──────▼───────┐
-                    │    worker    │  messenger:consume
-                    └──────────────┘
+                    ┌──────▼───────┐      ┌─────────────────┐
+                    │    worker    │─────►│ Temporal server │ durable workflow
+                    │  messenger:  │      └────────┬────────┘
+                    │   consume    │               │ task queue
+                    └──────────────┘      ┌────────▼────────┐
+                                          │ temporal-worker │ RoadRunner
+                                          │ (workflow/      │ （PHP workflow
+                                          │  activity)      │   與 activity）
+                                          └─────────────────┘
         所有服務 ──OTLP──► Jaeger（鏈路追蹤）
 ```
 
@@ -64,10 +70,12 @@ src/
 
 ## 演進路線
 
-### P1 品質關卡（工具已就位）
-- `composer stan`（PHPStan level 6）、`composer cs`（PHP-CS-Fixer）、
-  `composer deptrac`（模組邊界檢查）— 接入 CI 後作為合併門檻。
-- 補 PHPUnit + 每模組的功能測試；對訊息契約加序列化快照測試。
+### P1 品質關卡（已接入 CI）
+- 每個 push/PR 執行 `composer qa`：PHPStan level 6、PHP-CS-Fixer、
+  Deptrac 模組邊界、PHPUnit，另含 `composer audit` 依賴弱點掃描——全數為合併門檻。
+- 每模組已有各層測試（Domain 單元、Application mock、Infrastructure 走真實 PG
+  的整合測試、Presentation HTTP 功能測試）。
+- 待補：訊息契約的序列化快照測試、測試覆蓋率報告與門檻。
 
 ### P2 事件驅動深化
 - 寫入側導入 **transactional outbox**（Messenger 的 doctrine transport 作 outbox，

@@ -6,6 +6,7 @@ namespace App\Orchestration\Infrastructure\Temporal;
 
 use App\Orchestration\Application\ReminderScheduler;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\IdReusePolicy;
@@ -14,11 +15,12 @@ use Temporal\Exception\Client\WorkflowNotFoundException;
 
 final readonly class TemporalReminderScheduler implements ReminderScheduler
 {
-    private const string TASK_QUEUE = 'default';
-
     public function __construct(
         private WorkflowClientInterface $client,
         private LoggerInterface $logger,
+        // 必須與 temporal-worker（bin/temporal-worker.php）註冊的 queue 一致
+        #[Autowire('%env(TEMPORAL_TASK_QUEUE)%')]
+        private string $taskQueue = 'default',
     ) {
     }
 
@@ -34,7 +36,7 @@ final readonly class TemporalReminderScheduler implements ReminderScheduler
                 // 否則短提醒完成後的重複投遞仍會排出第二個提醒
                 ->withWorkflowId(self::workflowId($eventId))
                 ->withWorkflowIdReusePolicy(IdReusePolicy::RejectDuplicate)
-                ->withTaskQueue(self::TASK_QUEUE),
+                ->withTaskQueue($this->taskQueue),
         );
 
         try {
