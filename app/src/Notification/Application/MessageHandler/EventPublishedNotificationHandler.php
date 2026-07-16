@@ -5,22 +5,27 @@ declare(strict_types=1);
 namespace App\Notification\Application\MessageHandler;
 
 use App\EventManage\Application\Message\EventPublished;
-use Psr\Log\LoggerInterface;
+use App\Notification\Application\Notifier;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
 final readonly class EventPublishedNotificationHandler
 {
     public function __construct(
-        private LoggerInterface $logger,
+        private Notifier $notifier,
     ) {
     }
 
     public function __invoke(EventPublished $message): void
     {
-        $this->logger->info('Notification: event published', [
-            'event_id' => $message->eventId,
-            'name' => $message->name,
-        ]);
+        $this->notifier->notify(
+            'log',
+            'Notification: event published',
+            \sprintf('Event "%s" was published.', $message->name),
+            [
+                'event_id' => $message->eventId,
+                'name' => $message->name,
+            ],
+        );
     }
 }

@@ -42,7 +42,10 @@ src/
 │   ├── Application/   #   ReminderScheduler port + 訂閱 handler（不依賴 Temporal SDK）
 │   └── Infrastructure/#   Temporal adapter、workflow/activity 定義（跑在 temporal-worker/RoadRunner）
 ├── Notification/      # 通知（EventManage 與 FlowEngine 整合事件的訂閱者，只依賴 Message 契約）
-│   └── Application/MessageHandler/
+│   ├── Domain/        #   Notification 實體＋狀態機（pending/sent/failed）、NotificationRepository 介面
+│   ├── Application/   #   Notifier port + ChannelNotifier、NotificationChannel 介面、MessageHandler/（訂閱端）
+│   ├── Infrastructure/#   DoctrineNotificationRepository（PG schema: notification）、LogNotificationChannel（tagged service 可擴充 email/SMS/push）
+│   └── Presentation/  #   NotificationController（REST /api/notifications，唯讀）
 ├── Demo/              # 範例模組（示範規範，可刪除）
 └── <NewContext>/      # 新模組照此格局：Domain / Application / Infrastructure / Presentation
 ```
